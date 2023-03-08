@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using Microsoft.Win32;
+﻿using System.Text.RegularExpressions;
 using NetEti.Globals;
-using System.IO;
+using Microsoft.Win32;
 
 namespace NetEti.ApplicationEnvironment
 {
@@ -50,9 +47,9 @@ namespace NetEti.ApplicationEnvironment
         /// </param>
         /// <param name="defaultValue">Wird zurückgeliefert, wenn kein passender Eintrag gefunden wurde.</param>
         /// <returns>String-Wert des Keys (Registry rechts)</returns>
-        public string GetStringValue(string key, string defaultValue)
+        public string? GetStringValue(string key, string? defaultValue)
         {
-            string rtn = null;
+            string? rtn = null;
             string keyString = Regex.Replace(key, @"\\[^\\]*$", "");
             if (keyString.Equals(key))
             {
@@ -63,7 +60,11 @@ namespace NetEti.ApplicationEnvironment
                 keyString = Path.Combine(this.RegistryBasePath, keyString);
             }
             string valueName = Regex.Replace(key, @".*\\", "");
-            RegistryKey rk
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
+            RegistryKey? rk
                 = this._rootKeys[this.CurrentRegistryRoot].OpenSubKey(keyString);
             if (rk != null)
             {
@@ -73,7 +74,7 @@ namespace NetEti.ApplicationEnvironment
                     {
                         try
                         {
-                            rtn = (string)rk.GetValue(sKey);
+                            rtn = (string?)rk.GetValue(sKey);
                             break;
                         }
                         catch (InvalidCastException /* ex */)
@@ -100,9 +101,9 @@ namespace NetEti.ApplicationEnvironment
         /// </param>
         /// <param name="defaultValues">Werden zurückgeliefert, wenn keine passenden Einträge gefunden wurden.</param>
         /// <returns>String-Werte (REG_MULTI_SZ)) des Keys (Registry rechts)</returns>
-        public string[] GetStringValues(string key, string[] defaultValues)
+        public string?[]? GetStringValues(string key, string?[]? defaultValues)
         {
-            string[] rtn = null;
+            string?[]? rtn = null;
             string keyString = Regex.Replace(key, @"\\[^\\]*$", "");
             if (keyString.Equals(key))
             {
@@ -113,7 +114,11 @@ namespace NetEti.ApplicationEnvironment
                 keyString = Path.Combine(this.RegistryBasePath, keyString);
             }
             string valueName = Regex.Replace(key, @".*\\", "");
-            RegistryKey rk
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
+            RegistryKey? rk
                 = this._rootKeys[this.CurrentRegistryRoot].OpenSubKey(keyString);
             if (rk != null)
             {
@@ -123,7 +128,7 @@ namespace NetEti.ApplicationEnvironment
                     {
                         try
                         {
-                            rtn = (string[])rk.GetValue(sKey);
+                            rtn = (string?[]?)rk.GetValue(sKey);
                             break;
                         }
                         catch (InvalidCastException /* ex */)
@@ -179,6 +184,10 @@ namespace NetEti.ApplicationEnvironment
         /// <param name="initRegRoot">Die vorerst zu verwendende RegistryRoot</param>
         public RegAccess(RegistryRoot initRegRoot)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
             this._rootKeys = new Dictionary<RegistryRoot, RegistryKey>();
             this._rootKeyStrings = new Dictionary<string, RegistryRoot>();
             this._rootKeys[RegistryRoot.HkeyClassesRoot] = Registry.ClassesRoot;
@@ -193,6 +202,7 @@ namespace NetEti.ApplicationEnvironment
             this._rootKeyStrings["HKEY_CURRENT_CONFIG"] = RegistryRoot.HkeyCurrentConfig;
             this.CurrentRegistryRoot = initRegRoot;
             this.Description = "Registry: " + this.CurrentRegistryRoot.ToString();
+            this._registryBasePath = "";
             this.RegistryBasePath = "";
         }
 
@@ -212,6 +222,10 @@ namespace NetEti.ApplicationEnvironment
         /// <exception cref="ArgumentException">Wird ausgelöst, wenn der übergebene registryBasePath nicht in einen RegistryKey konvertierbar ist.</exception>
         public void SetRegistryBasePath(string registryBasePath)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
             registryBasePath = registryBasePath.TrimEnd(new char[] { '\\', '/' });
             RegistryRoot accessRegistryRoot = this.CurrentRegistryRoot;
             string rootKey = registryBasePath.Split(new char[] { '/', '\\' })[0];
@@ -220,7 +234,7 @@ namespace NetEti.ApplicationEnvironment
                 accessRegistryRoot = this._rootKeyStrings[rootKey];
                 registryBasePath = registryBasePath.Replace(rootKey, "").TrimStart(new char[] { '\\', '/' });
             }
-            RegistryKey rk = this._rootKeys[accessRegistryRoot].OpenSubKey(registryBasePath);
+            RegistryKey? rk = this._rootKeys[accessRegistryRoot].OpenSubKey(registryBasePath);
             if (rk != null)
             {
                 this._registryBasePath = registryBasePath;
@@ -239,12 +253,16 @@ namespace NetEti.ApplicationEnvironment
         /// <returns>String[] mit den Schlüsselnamen (kann leer sein)</returns>
         public String[] GetSubKeyNames(string keyString)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
             string[] rtn = { };
             if (!String.IsNullOrEmpty(this.RegistryBasePath))
             {
                 keyString = Path.Combine(this.RegistryBasePath, keyString);
             }
-            RegistryKey rk
+            RegistryKey? rk
                 = this._rootKeys[this.CurrentRegistryRoot].OpenSubKey(keyString);
             if (rk != null)
             {
@@ -265,12 +283,16 @@ namespace NetEti.ApplicationEnvironment
         /// <returns>String[] mit den Parameternamen (kann leer sein)</returns>
         public String[] GetSubValueNames(string keyString)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RegAccess: Registry-Zugriffe sind nur für Windows implementiert.");
+            }
             string[] rtn = { };
             if (!String.IsNullOrEmpty(this.RegistryBasePath))
             {
                 keyString = Path.Combine(this.RegistryBasePath, keyString);
             }
-            RegistryKey rk
+            RegistryKey? rk
                 = this._rootKeys[this.CurrentRegistryRoot].OpenSubKey(keyString);
             if (rk != null)
             {

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-using NetEti.ApplicationEnvironment;
+﻿using NetEti.ApplicationEnvironment;
 
 namespace NetEti.DemoApplications
 {
@@ -45,7 +43,7 @@ namespace NetEti.DemoApplications
             }
             else
             {
-                string regValue = regAcc.GetStringValue(this.tbxKey.Text, null);
+                string? regValue = regAcc.GetStringValue(this.tbxKey.Text, null);
                 if (regValue != null)
                 {
                     this.lbxValues.Items.Clear();
@@ -56,7 +54,7 @@ namespace NetEti.DemoApplications
 
         private void lbxValues_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            string sel = (string)this.lbxValues.SelectedItem;
+            string? sel = (string?)this.lbxValues.SelectedItem;
             if ("".Equals(this.tbxKey.Text))
             {
                 this.tbxKey.Text = sel;
